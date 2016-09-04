@@ -1,7 +1,5 @@
 package ru.rykov.rdd.lambda;
 
-import java.io.Serializable;
-
 /**
  * Created by sulion on 04.09.16.
  */

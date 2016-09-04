@@ -2,7 +2,6 @@ package ru.rykov.rdd;
 
 
 import io.netty.util.internal.ThreadLocalRandom;
-import org.junit.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;

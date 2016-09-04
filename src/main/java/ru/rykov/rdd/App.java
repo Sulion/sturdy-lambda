@@ -1,45 +1,47 @@
 package ru.rykov.rdd;
 
-import groovy.lang.GroovyClassLoader;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import ru.rykov.rdd.lambda.LambdaHolder;
 import scala.Tuple2;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.Scanner;
 
 /**
  * Hello world!
- *
  */
-public class App implements Serializable
-{
+public class App implements Serializable {
+    public static final String APP_NAME = "sturdy-lambda";
+    public static final String LAMBDA_HOLDER_PATTERN = "class Transformer implements " +
+            "ru.rykov.rdd.lambda.DataTransformer " +
+            "{ %1$s \n %2$s}";
     private final URI dataSet;
     private final LambdaHolder holder;
 
-    public static void main( String[] args ) throws IOException {
-        String appName = "sturdy-lambda";
-        String master = "local";
-        SparkConf conf = new SparkConf().setAppName(appName).setMaster(master).setJars(new String[]{
-                "/home/sulion/.m2/repository/org/codehaus/groovy/groovy-all/2.4.7/groovy-all-2.4.7.jar"
-        });
-        JavaSparkContext sc = new JavaSparkContext(conf);
-        App app = new App(URI.create("file:///home/sulion/src/sturdy-lambda/data.txt"),
-                URI.create("file:///home/sulion/src/sturdy-lambda/map.groovy"),
-                URI.create("file:///home/sulion/src/sturdy-lambda/reduce.groovy"));
+    public static void main(String[] args) throws IOException {
+        if (args.length < 3) {
+            System.err.println(String.format("Usage: %1$s <datafile> <map groovy script> <reduce groovy script>",
+                    APP_NAME));
+            System.exit(1);
+        }
+
+        JavaSparkContext sc = new JavaSparkContext(new SparkConf());
+        App app = new App(URI.create(args[0]), URI.create(args[1]), URI.create(args[2]));
         System.out.println(app.calculate(sc));
     }
 
 
     public App(URI dataSet, URI mapFunc, URI reduceFunc) {
         this.dataSet = dataSet;
-        GroovyClassLoader gcl = new GroovyClassLoader();
-        String dataTransformerSource = String.format("class Transformer implements " +
-                "ru.rykov.rdd.lambda.DataTransformer " +
-                "{ %1$s \n %2$s}", fileContents(mapFunc), fileContents(reduceFunc));
+        String dataTransformerSource = String.format(LAMBDA_HOLDER_PATTERN,
+                fileContents(mapFunc),
+                fileContents(reduceFunc));
         holder = new LambdaHolder(dataTransformerSource);
     }
 
